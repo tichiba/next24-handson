@@ -46,7 +46,7 @@ export PROJECT_ID=$(gcloud config list --format 'value(core.project)')
 次に、このハンズオンで利用するAPIを有効化します。
 
 <walkthrough-enable-apis apis=
-  "cloudaicompanion, aiplatform">
+  "cloudaicompanion.googleapis.com, aiplatform.googleapis.com">
 </walkthrough-enable-apis>
 
 ## GCS バケットの作成とファイルのアップロード
