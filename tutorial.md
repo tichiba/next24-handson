@@ -1,31 +1,34 @@
 # はじめてのBigQueryハンズオン
 
 ## ハンズオンの概要
-このラボでは、分析するデータ (CSV ファイル) を Cloud Storage へアップロードして、BigQuery へ Import してから Looker Studio のダッシュボードに表示させます。
+このラボでは、架空の小売チェーンのデータを BigQuery へ Import して生成 AI Gemini を活用したデータの分析・可視化を行います。
 
-データは3つの種類を準備しています。店舗の住所などをまとめた店舗情報データ、店舗で実際に発生した売上の個別データ、そして店舗に寄せられたお客様からの声のデータです。
+データは3つの種類を準備しています。店舗の住所などをまとめた店舗情報データ、店舗で実際に発生した売上の個別データ、そして店舗に寄せられたお客様からのアンケートのデータです。
 
 このラボの内容：
-* CSV ファイルを Cloud Storage にアップロードします。
-* CSV ファイルを BigQuery へインポートします。
-* Looker Studio で売上ダッシュボードを作成します。
-* (Optional) BigQuery から生成AIモデル Gemini Pro を呼び出してお客様の声を分析します。
+* CSV形式の店舗データ、アンケートデータをBigQueryにインポートする
+* Gemini in BigQuery を用いてデータを理解する
+* BigQueryML と Gemini Pro を用いてアンケートデータを分析する
+* DataCanvas を用いてクイックにデータを可視化する
+* Looker Studio を用いてダッシュボードを作成する
+
 
 ## ハンズオンの開始
 <walkthrough-tutorial-duration duration=5></walkthrough-tutorial-duration>
-ハンズオンに利用するファイルをダウンロードします。既に実施済の手順はスキップすることができます。
+まずはハンズオンに利用するファイルをダウンロードします。
+<walkthrough-info-message>既に実施済の手順はスキップできます。</walkthrough-info-message>
 
 Cloud Shell 
 <walkthrough-cloud-shell-icon></walkthrough-cloud-shell-icon> を開き、次のコマンドを実行します。
 
-### **1. チュートリアル資材をダウンロードする**
+### **1. ハンズオン資材をダウンロードする**
 ```bash
-git clone https://github.com/tichiba/googlecloud.git
+git clone https://github.com/tichiba/next24-handson.git
 ```
 
-### **2. チュートリアル資材があるディレクトリに移動する**
+### **2. ハンズオン資材があるディレクトリに移動する**
 ```bash
-cd ~/googlecloud/bigquery101
+cd ~/next24-handson
 ```
 
 ### **3. チュートリアルを開く**
@@ -40,14 +43,19 @@ export PROJECT_ID=$(gcloud config list --format 'value(core.project)')
 ```
 <walkthrough-info-message>**Tips:** コードボックスの横にあるボタンをクリックすることで、クリップボードへのコピーおよび Cloud Shell へのコピーが簡単に行えます。</walkthrough-info-message>
 
+次に、このハンズオンで利用するAPIを有効化します。
+<walkthrough-enable-apis apis=
+  "cloudaicompanion, aiplatform">
+</walkthrough-enable-apis>
+
 ## GCS バケットの作成とファイルのアップロード
 
 1. ファイルのアップロード先となる GCS バケットを作成します。
 ```bash
-gcloud storage buckets create gs://${PROJECT_ID}_bigquery_handson --project=$PROJECT_ID --location=us-central1
+gcloud storage buckets create gs://${PROJECT_ID}_bigquery_handson --project=$PROJECT_ID --location=asia-northeast1
 ```
 
-2. 作成した GCS バケットにチュートリアル資材の CSV をアップロードします。
+2. 作成した GCS バケットにハンズオン資材の CSV をアップロードします。
 ```bash
 gcloud storage cp store_data.csv sales_data.csv customer_voice_data.csv gs://${PROJECT_ID}_bigquery_handson
 ```
@@ -72,7 +80,7 @@ gcloud storage cp store_data.csv sales_data.csv customer_voice_data.csv gs://${P
   ------- | --------
   データセット ID | `bq_handson`
   ロケーションタイプ | リージョン
-  データのロケーション | `us-central1`
+  データのロケーション | `asia-northeast1`
 
 4. [**データセットを作成**] をクリックします。
 5. エクスプローラペインの自身のプロジェクト ID の下に、データセット `bq_handson` が作成されていることを確認します。
@@ -150,8 +158,32 @@ gcloud storage cp store_data.csv sales_data.csv customer_voice_data.csv gs://${P
 ```
 6. [**テーブルを作成**] をクリックします。
 
+## Customer voice data テーブルの作成
+続けて、もう1つのテーブルを作成します。
+
+1. エクスプローラーペインで `bq_handson` の横にある **︙** をクリックし、続いて [**テーブルを作成**] をクリックします。
+2. [**ソース**] の [**テーブルの作成元**] に [**Google Cloud Storage**] を選択します。
+3. [**参照**] をクリックして、Cloud Storage から [**customer_voice_data.csv**] ファイルを選択します。
+4. [**送信先**] の [**テーブル**] の名前に `customer_voice_data` を入力します。
+5. [**スキーマ**] > [**テキストとして編集**] をオンにして下記のように定義します。
+```
+[
+   {
+       "name": "store",
+       "type": "STRING",
+       "mode": "NULLABLE"
+   },
+   {
+       "name": "customer_voice",
+       "type": "STRING",
+       "mode": "NULLABLE"
+   }
+]
+```
+6. [**テーブルを作成**] をクリックします。
+
 ## BigQuery でテーブルのデータを確認
-作成した2つのテーブルのデータをプレビューで確認します。
+作成した3つのテーブルのデータをプレビューで確認します。
 
 ### **1. Store data テーブルのデータを確認する**
 
@@ -162,6 +194,11 @@ gcloud storage cp store_data.csv sales_data.csv customer_voice_data.csv gs://${P
 
 3. エクスプローラーペインから **プロジェクト ID** > `bq_handson` > `sales_data` テーブルを選択します。
 4. [**プレビュー**] をクリックします。
+
+### **2. Customer voice data テーブルのデータを確認する**
+
+5. エクスプローラーペインから **プロジェクト ID** > `bq_handson` > `customer_voice_data` テーブルを選択します。
+6. [**プレビュー**] をクリックします。
 
 BigQUery へ CSV データをインポートすることができました。
 
@@ -219,7 +256,7 @@ ORDER BY 1,2
 時刻 | `01:00`
 すぐに開始 | 選択する
 ロケーションタイプ | リージョン
-リージョン | `us-central1`
+リージョン | `asia-northeast1`
 
 5. 他はデフォルトのまま [**保存**] をクリックし、スケジュールを保存します。認証を求められた場合は、ハンズオン用のユーザーを選んで認証します。
 6. すぐに開始 を選択したため、エクスプローラーペインの **プロジェクト ID** > `bq_handson` の下に新しいテーブル `daily_items_count_per_subcategory` が作成されていることが確認できます。
@@ -329,7 +366,7 @@ Gemini in BigQuery のアシスタント機能を学びました。これ以外�
 接続タイプ | **Vertex AI リモートモデル、リモート関数、BigLake（Cloud リソース）**
 接続 ID | `gemini-connect`
 ロケーションタイプ | **リージョン**
-リージョン | `us-central1`
+リージョン | `asia-northeast1`
 
 4. [**接続を作成**] をクリックします。
 5. [**接続へ移動**] をクリックします。
@@ -363,7 +400,7 @@ gcloud services enable aiplatform.googleapis.com
 1. [**SQLクエリを作成**] をクリックして新しいタブを開き、以下の SQL を実行します。
 ```sql
 CREATE OR REPLACE MODEL bq_handson.gemini_pro
-  REMOTE WITH CONNECTION `us-central1.gemini-connect`
+  REMOTE WITH CONNECTION `asia-northeast1.gemini-connect`
   OPTIONS(ENDPOINT = 'gemini-pro')
 ```
 
@@ -388,31 +425,10 @@ FROM ML.GENERATE_TEXT(
   )
 ```
 
-## (Optional) 顧客の声データを生成AIを用いて分析
+## 顧客の声データを生成AIを用いて分析
 BigQuery 上で生成 AI モデルに接続することで、顧客の声データの分析を行います。
 
-### **1.顧客の声データのテーブル作成**
-1. エクスプローラーペインで `bq_handson` の横にある **︙** をクリックし、続いて [**テーブルを作成**] をクリックします。
-2. [**ソース**] の [**テーブルの作成元**] に [**Google Cloud Storage**] を選択します。
-3. [**参照**] をクリックして、Cloud Storage から [**customer_voice_data.csv**] ファイルを選択します。
-4. [**送信先**] の [**テーブル**] の名前に `customer_voice_data` を入力します。
-5. [**スキーマ**] > [**テキストとして編集**] をオンにして下記のように定義します。
-```
-[
-   {
-       "name": "store",
-       "type": "STRING",
-       "mode": "NULLABLE"
-   },
-   {
-       "name": "customer_voice",
-       "type": "STRING",
-       "mode": "NULLABLE"
-   }
-]
-```
-6. [**テーブルを作成**] をクリックします。
-7. エクスプローラーペインで `bq_handson` > `customer_voice_data` を選択し、[**プレビュー**] をクリックします。
+
 
 ### **2.顧客の声データの分析**
 7. [**クエリ**] > [**新しいタブ**] をクリックし、次の SQL を入力して [**実行**] をクリックします。 
