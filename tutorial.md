@@ -44,6 +44,7 @@ export PROJECT_ID=$(gcloud config list --format 'value(core.project)')
 <walkthrough-info-message>**Tips:** コードボックスの横にあるボタンをクリックすることで、クリップボードへのコピーおよび Cloud Shell へのコピーが簡単に行えます。</walkthrough-info-message>
 
 次に、このハンズオンで利用するAPIを有効化します。
+
 <walkthrough-enable-apis apis=
   "cloudaicompanion, aiplatform">
 </walkthrough-enable-apis>
