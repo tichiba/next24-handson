@@ -205,12 +205,68 @@ BigQUery へ CSV データをインポートすることができました。
 
 次に BigQuery のデータに対するクエリの実行方法を学びます。
 
-## BigQueryで簡単なクエリを実行
+<!-- TODO:Data Insights が public になったら追加 -->
+
+## BigQuery で簡単なクエリを実行
 <walkthrough-tutorial-duration duration=15></walkthrough-tutorial-duration>
 
-2つのテーブルのデータを JOIN して、商品カテゴリーごとの売上を集計するクエリを実行します。
+店舗ごとの売上を集計するクエリを実行します。
 
 1. <walkthrough-spotlight-pointer cssSelector="[instrumentationid=bq-sql-code-editor] button[name=addTabButton]" single="true">[**SQL クエリを作成**] アイコン</walkthrough-spotlight-pointer> をクリックして、新しいタブを開きます。
+
+2. 下記の SQL を入力し、[**実行**] をクリックして実行結果を確認します。
+```SQL
+SELECT 
+  store,
+  SUM(price) as sales_total
+FROM `bq_handson.sales_data`
+GROUP BY store
+```
+
+## Gemini で SQL クエリを生成
+
+次に、Gemini を用いて SQL クエリを生成します。
+
+1. <walkthrough-spotlight-pointer cssSelector="[instrumentationid=bq-sql-code-editor] button[name=addTabButton]" single="true">[**SQL クエリを作成**] アイコン</walkthrough-spotlight-pointer> をクリックして、新しいタブを開きます。
+
+2. <walkthrough-spotlight-pointer cssSelector="sqe-duet-trigger-overlay" single="true">[**コーディングをサポート**]アイコン</walkthrough-spotlight-pointer> をクリックするか、Ctrl + Shift + P を入力して、[**コーディングをサポート**]ツールを開きます。
+
+3. 次のプロンプトを入力します。
+```
+bq_handsonデータセットから、販売金額トップ10の商品とそのカテゴリ、サブカテゴリを調べるクエリを書いて
+```
+
+4. [**生成**] をクリックします。
+  Gemini は、次のような SQL クエリを生成します。
+```terminal
+-- bq_handsonデータセットから、販売金額トップ10の商品とそのカテゴリ、サブカテゴリを調べるクエリを書いて
+SELECT
+    t1.item_name,
+    t1.classification,
+    t1.sub_classification,
+    sum(t1.price) AS total_sales
+  FROM
+    bq_handson.sales_data AS t1
+  GROUP BY 1, 2, 3
+ORDER BY
+  total_sales DESC
+LIMIT 10
+```
+
+<walkthrough-info-message>**注:** Gemini は、同じプロンプトに対して異なる SQL クエリを提案する場合があります。</walkthrough-info-message>
+
+5. 生成された SQL クエリを受け入れるには、[**挿入**] をクリックして、クエリエディタにステートメントを挿入します。[**実行**] をクリックして、提案された SQL クエリを実行します。
+
+3. 実行したクエリを保存して、チームへの共有や次回に再利用することができます。 [**保存**] をクリックし、続いて [**クエリを保存**] をクリックします。
+
+4. [**名前**] に `販売トップ10` と入力し、[**保存**] をクリックします。
+
+5. 保存されたクエリはエクスプローラペインの **プロジェクト ID** > [**クエリ**] の下で確認ができます。
+
+
+<!-- この部分、可視化で使う。DataCanvasでつくるように書き換える
+1. <walkthrough-spotlight-pointer cssSelector="[instrumentationid=bq-sql-code-editor] button[name=addTabButton]" single="true">[**SQL クエリを作成**] アイコン</walkthrough-spotlight-pointer> をクリックして、新しいタブを開きます。
+
 2. 下記の SQL を入力し、[**実行**] をクリックして実行結果を確認します。
 ```sql
 SELECT
@@ -224,35 +280,34 @@ INNER JOIN `bq_handson.store_data` as b
 GROUP BY a.store, a.classification
 ORDER BY 1,2
 ```
-
-3. 実行したクエリを保存して、チームへの共有や次回に再利用することができます。 [**保存**] をクリックし、続いて [**クエリを保存**] をクリックします。
-4. [**名前**] に `販売サマリー` と入力し、[**保存**] をクリックします。
-5. 保存されたクエリはエクスプローラペインの **プロジェクト ID** > [**クエリ**] の下で確認ができます。
+-->
 
 ## BigQueryでクエリの定期実行を設定
 次に、定期的にクエリを実行する スケジュールの作成をします。
 
-1. エクスプローラーペインから **プロジェクト ID** > [**クエリ**] > `販売サマリー` を選択します。
-2. クエリを以下のように修正し、[**クエリを保存**] をクリックします。1行目が追加され、実行結果を別テーブルに保存するようにしています。
+1. エクスプローラーペインから **プロジェクト ID** > [**クエリ**] > `販売トップ10` を選択します。
+2. クエリを以下のように修正し、[**クエリを保存**] をクリックします。1行目を追加し、実行結果を別テーブルに保存するようにしています。
 ```sql
-CREATE OR REPLACE TABLE `bq_handson.daily_sales_summary` AS
+CREATE OR REPLACE TABLE `bq_handson.top10_items` AS
 SELECT
-    a.store,
-    a.classification as category,
-    count(item_name) as sales_number,
-    sum(price) as sales_amount
- FROM `bq_handson.sales_data` as a
-INNER JOIN `bq_handson.store_data` as b
-   ON a.store = b.store
-GROUP BY a.store, a.classification
-ORDER BY 1,2
+    t1.item_name,
+    t1.classification,
+    t1.sub_classification,
+    sum(t1.price) AS total_sales
+  FROM
+    bq_handson.sales_data AS t1
+  GROUP BY 1, 2, 3
+ORDER BY
+  total_sales DESC
+LIMIT 10
 ```
+
 3. [**スケジュール**] をクリックします。
 4. **新たにスケジュールされたクエリ** ペインで次のとおり入力します。
 
 フィールド | 値
 ---------------- | ----------------
-クエリの名前 | `日次販売サマリー`
+クエリの名前 | `日次販売トップ10`
 繰り返しの頻度 | 日
 時刻 | `01:00`
 すぐに開始 | 選択する
@@ -260,11 +315,12 @@ ORDER BY 1,2
 リージョン | `asia-northeast1`
 
 5. 他はデフォルトのまま [**保存**] をクリックし、スケジュールを保存します。認証を求められた場合は、ハンズオン用のユーザーを選んで認証します。
-6. すぐに開始 を選択したため、エクスプローラーペインの **プロジェクト ID** > `bq_handson` の下に新しいテーブル `daily_items_count_per_subcategory` が作成されていることが確認できます。
+6. すぐに開始 を選択したため、エクスプローラーペインの **プロジェクト ID** > `bq_handson` の下に新しいテーブル `top10_items` が作成されていることが確認できます。
 7. スケジュールされたクエリの実行結果を、ナビゲーションペインの **スケジュールされたクエリ**  から確認します。
 
 BigQuery のデータに対するクエリの実行方法を学びました。
 
+<!-- 上に移動した
 ## (Optional) Gemini in BigQuery の有効化
 ここでは、Gemini のアシスタント機能を使用してデータ探索を行う方法を学びます。
 
@@ -311,6 +367,7 @@ LIMIT 10
 3. 生成された SQL クエリを受け入れるには、[**挿入**] をクリックして、クエリエディタにステートメントを挿入します。[**実行**] をクリックして、提案された SQL クエリを実行します。
 
 Gemini in BigQuery のアシスタント機能を学びました。これ以外のプロンプトも自由に試してみてください。
+-->
 
 ## Looker Studio に BigQuery のデータを追加
 <walkthrough-tutorial-duration duration=15></walkthrough-tutorial-duration>
@@ -331,7 +388,7 @@ Gemini in BigQuery のアシスタント機能を学びました。これ以外�
 ---------------- | ----------------
 プロジェクト | プロジェクトID
 データセット | `bq_handson`
-表 | `daily_sales_summary`
+表 | `top10_items`
 
 5. [**追加**] をクリックします。続いて [**レポートに追加**] をクリックします。
 
