@@ -1,9 +1,20 @@
 # はじめてのBigQueryハンズオン
 
 ## ハンズオンの概要
+
+あなたは、東京と横浜に店舗を持つ小売チェーン Tesco の CS 担当者です。
+
+Tesco は、顧客満足度を向上させるために、店舗に来店した顧客からアンケートを収集しています。しかし、アンケートの回答は CSV 形式で保存されており、そのデータ量は膨大です。
+
+あなたは、この大量のアンケートデータを効率的に分析し、具体的なサービス改善につなげたいと考えています。
+
+そのために、あなたは BigQuery と Gemini を活用することで、これらの課題を解決できると考えました。
+
+<!--
 このラボでは、架空の小売チェーンのデータを BigQuery へ Import して生成 AI Gemini を活用したデータの分析・可視化を行います。
 
 データは3つの種類を準備しています。店舗の住所などをまとめた店舗情報データ、店舗で実際に発生した売上の個別データ、そして店舗に寄せられたお客様からのアンケートのデータです。
+-->
 
 このラボの内容：
 * CSV形式の店舗データ、アンケートデータをBigQueryにインポートする
@@ -21,17 +32,17 @@
 Cloud Shell 
 <walkthrough-cloud-shell-icon></walkthrough-cloud-shell-icon> を開き、次のコマンドを実行します。
 
-### **1. ハンズオン資材をダウンロードする**
+### 1. ハンズオン資材をダウンロードする
 ```bash
 git clone https://github.com/tichiba/next24-handson.git
 ```
 
-### **2. ハンズオン資材があるディレクトリに移動する**
+### 2. ハンズオン資材があるディレクトリに移動する
 ```bash
 cd ~/next24-handson
 ```
 
-### **3. チュートリアルを開く**
+### 3. チュートリアルを開く
 ```bash
 teachme tutorial.md
 ```
@@ -48,6 +59,12 @@ export PROJECT_ID=$(gcloud config list --format 'value(core.project)')
 <walkthrough-enable-apis apis=
   "bigquery.googleapis.com, cloudaicompanion.googleapis.com, aiplatform.googleapis.com, dataplex.googleapis.com">
 </walkthrough-enable-apis>
+
+## **[シナリオ1] CSV 形式の店舗データ、アンケートデータを BigQuery にインポートする**
+
+<walkthrough-tutorial-duration duration=15></walkthrough-tutorial-duration>
+
+あなたはまず、Tescoの各店舗から送られてきたCSV形式のデータを扱います。店舗データには店舗名、住所、開店時間などが、売上データには商品ID、売上金額、販売日時などが、アンケートデータには顧客ID、年齢、性別、満足度などが含まれています。これらのデータを手作業で分析するのは困難なため、BigQueryにインポートすることにしました。BigQueryのシンプルなインターフェースを使って、それぞれのCSVファイルを簡単にアップロードし、分析の準備を整えます。
 
 ## GCS バケットの作成とファイルのアップロード
 
@@ -66,7 +83,6 @@ gcloud storage cp store_data.csv sales_data.csv customer_voice_data.csv gs://${P
 次に BigQuery への CSV データのインポート方法を学びます。
 
 ## BigQuery の Dataset 準備
-<walkthrough-tutorial-duration duration=15></walkthrough-tutorial-duration>
 ここからはより直感的に理解しやすいよう Cloud Console 上で操作を行います。
 
 まずは BigQuery の Dataset を作成します。
@@ -205,6 +221,12 @@ BigQUery へ CSV データをインポートすることができました。
 
 次に BigQuery のデータに対するクエリの実行方法を学びます。
 
+## **[シナリオ2] Gemini in BigQuery を用いてデータを理解する**
+
+<walkthrough-tutorial-duration duration=15></walkthrough-tutorial-duration>
+
+膨大なデータの中身を確認するために、Gemini in BigQueryを活用します。「店舗別の平均顧客満足度は？」「売上が高い店舗の特徴は？」といった質問を自然言語で投げかけると、Geminiが自動的にSQLクエリを生成し、結果を表示してくれます。これにより、データの全体像を素早く把握し、分析の方向性を定めることができます。
+
 <!-- TODO:Data Insights が public になったら追加 -->
 
 ## BigQuery で簡単なクエリを実行
@@ -227,19 +249,30 @@ GROUP BY store
 
 次に、Gemini を用いて SQL クエリを生成します。
 
+<!-- Geminiの有効化ができてなかったら、以下の手順を追加
+
+まず、Gemini in BigQuery を有効化します。
+
+1. クエリエディタの横にある <walkthrough-spotlight-pointer cssSelector="[instrumentationid=bq-sql-code-editor] button#_1rif_Gemini" single="true">[**Gemini**] アイコン</walkthrough-spotlight-pointer> にマウスカーソルを合わせ、表示されたツールチップの [**続行**] をクリックします。
+
+2. [**Geminiを有効にする**]ペインで、Trusted Tester プログラムに関する利用規約への同意にチェックを入れ、[**次へ**] をクリックします。
+
+3. [**Cloud AI Companion API**] が無効になっている場合は [**有効にする**] をクリックし、[**閉じる**] をクリックします。
+-->
+
 1. <walkthrough-spotlight-pointer cssSelector="[instrumentationid=bq-sql-code-editor] button[name=addTabButton]" single="true">[**SQL クエリを作成**] アイコン</walkthrough-spotlight-pointer> をクリックして、新しいタブを開きます。
 
 2. <walkthrough-spotlight-pointer cssSelector="sqe-duet-trigger-overlay" single="true">[**コーディングをサポート**]アイコン</walkthrough-spotlight-pointer> をクリックするか、Ctrl + Shift + P を入力して、[**コーディングをサポート**]ツールを開きます。
 
 3. 次のプロンプトを入力します。
 ```
-bq_handsonデータセットから、販売金額トップ10の商品とそのカテゴリ、サブカテゴリを調べるクエリを書いて
+bq_handson データセットから、販売金額トップ10の商品とそのカテゴリ、サブカテゴリを調べるクエリを書いて
 ```
 
 4. [**生成**] をクリックします。
   Gemini は、次のような SQL クエリを生成します。
 ```terminal
--- bq_handsonデータセットから、販売金額トップ10の商品とそのカテゴリ、サブカテゴリを調べるクエリを書いて
+-- bq_handson データセットから、販売金額トップ10の商品とそのカテゴリ、サブカテゴリを調べるクエリを書いて
 SELECT
     t1.item_name,
     t1.classification,
@@ -286,7 +319,7 @@ ORDER BY 1,2
 次に、定期的にクエリを実行する スケジュールの作成をします。
 
 1. エクスプローラーペインから **プロジェクト ID** > [**クエリ**] > `販売トップ10` を選択します。
-2. クエリを以下のように修正し、[**クエリを保存**] をクリックします。1行目を追加し、実行結果を別テーブルに保存するようにしています。
+2. クエリを以下のように修正し、[**クエリを保存**] をクリックします。1行目を追加し、実行結果を新しいテーブル `top10_items` に保存するようにしています。
 ```sql
 CREATE OR REPLACE TABLE `bq_handson.top10_items` AS
 SELECT
@@ -307,7 +340,7 @@ LIMIT 10
 
 フィールド | 値
 ---------------- | ----------------
-クエリの名前 | `日次販売トップ10`
+クエリの名前 | `販売トップ10`
 繰り返しの頻度 | 日
 時刻 | `01:00`
 すぐに開始 | 選択する
@@ -320,94 +353,15 @@ LIMIT 10
 
 BigQuery のデータに対するクエリの実行方法を学びました。
 
-<!-- 上に移動した
-## (Optional) Gemini in BigQuery の有効化
-ここでは、Gemini のアシスタント機能を使用してデータ探索を行う方法を学びます。
-
-まず、Gemini in BigQuery を有効化します。
-
-1. クエリエディタの横にある <walkthrough-spotlight-pointer cssSelector="[instrumentationid=bq-sql-code-editor] button#_1rif_Gemini" single="true">[**Gemini**] アイコン</walkthrough-spotlight-pointer> にマウスカーソルを合わせ、表示されたツールチップの [**続行**] をクリックします。
-
-2. [**Geminiを有効にする**]ペインで、Trusted Tester プログラムに関する利用規約への同意にチェックを入れ、[**次へ**] をクリックします。
-
-3. [**Cloud AI Companion API**] が無効になっている場合は [**有効にする**] をクリックし、[**閉じる**] をクリックします。
-
-## (Optional) Gemini in BigQuery を用いてデータを探索
-
-次に、Gemini を用いて SQL クエリを生成します。
-
-1. <walkthrough-spotlight-pointer cssSelector="[instrumentationid=bq-sql-code-editor] button[name=addTabButton]" single="true">[**SQL クエリを作成**] アイコン</walkthrough-spotlight-pointer> をクリックして、新しいタブを開きます。
-
-2. <walkthrough-spotlight-pointer cssSelector="sqe-duet-trigger-overlay" single="true">[**コーディングをサポート**]アイコン</walkthrough-spotlight-pointer> をクリックするか、Ctrl + Shift + P を入力して、[**コーディングをサポート**]ツールを開きます。
-
-3. 次のプロンプトを入力します。
-```
-bq_handsonデータセットから、販売金額トップ10の商品とそのカテゴリ、サブカテゴリを調べるクエリを書いて
-```
-
-4. [**生成**] をクリックします。
-  Gemini は、次のような SQL クエリを生成します。
-```terminal
--- bq_handsonデータセットから、販売金額トップ10の商品とそのカテゴリ、サブカテゴリを調べるクエリを書いて
-SELECT
-    t1.item_name,
-    t1.classification,
-    t1.sub_classification,
-    sum(t1.price) AS total_sales
-  FROM
-    bq_handson.sales_data AS t1
-  GROUP BY 1, 2, 3
-ORDER BY
-  total_sales DESC
-LIMIT 10
-```
-
-<walkthrough-info-message>**注:** Gemini は、同じプロンプトに対して異なる SQL クエリを提案する場合があります。</walkthrough-info-message>
-
-3. 生成された SQL クエリを受け入れるには、[**挿入**] をクリックして、クエリエディタにステートメントを挿入します。[**実行**] をクリックして、提案された SQL クエリを実行します。
-
+<!-- 
 Gemini in BigQuery のアシスタント機能を学びました。これ以外のプロンプトも自由に試してみてください。
 -->
 
-## Looker Studio に BigQuery のデータを追加
+## **[シナリオ3] BigQueryML と Gemini を用いてアンケートデータを分析する**
+
 <walkthrough-tutorial-duration duration=15></walkthrough-tutorial-duration>
 
-まず、Looker Studio に可視化したい BigQuery のデータを追加します。
-
-1. [Looker Studio](https://lookerstudio.google.com/) にアクセスします。
-
-2. ナビゲーションペインの [**作成**] をクリックし、続いて [**レポート**] をクリックします。
-
-2. アカウントの設定画面が表示された場合は、画面に従って入力してください。
-
-3. [**データに接続**] セクションで [**BigQuery**] をクリックします。
-アクセス権を求められた場合は承認してください。
-4. マイプロジェクトからデータソースを次のとおり選択します。
-
-フィールド | 値
----------------- | ----------------
-プロジェクト | プロジェクトID
-データセット | `bq_handson`
-表 | `top10_items`
-
-5. [**追加**] をクリックします。続いて [**レポートに追加**] をクリックします。
-
-## Looker Studioにグラフを追加
-
-続いて、追加したデータを元に Looker Studio にグラフを追加します。
-
-1. メニューバーの[**グラフを追加**] > [**棒**] > [**縦棒グラフ**] をクリックします。
-2. 追加されたグラフを選択した状態で、[**グラフ**] ペインでデータの設定をします。
-
-フィールド | 値
----------------- | ----------------
-ディメンション | `store`
-内部ディメンション | `category`
-指標 | (SUM)`sales_amount`
-
-3. 追加されたグラフをドラッグして任意の位置に移動します。
-
-おめでとうございます！これで Looker Studio のダッシュボードを用いた BigQuery のデータの可視化は完了です。他のテーブルやグラフも自由に追加して試してみてください。
+顧客満足度を向上させるためには、アンケートデータの詳細な分析が必要です。BigQueryMLとGeminiを組み合わせることで、アンケートの自由記述回答を分析し、顧客の不満や要望を抽出します。例えば、「品揃えが悪い」「レジ待ち時間が長い」といった不満や、「オーガニック商品の拡充」「セルフレジの導入」といった要望を特定することができます。
 
 ## (Optional) BigQueryからVertex AIへの接続を作成
 <walkthrough-tutorial-duration duration=15></walkthrough-tutorial-duration>
@@ -513,7 +467,90 @@ FROM ML.GENERATE_TEXT(
 ```
 8. エクスプローラーペインで `bq_handson` > `customer_voice_category_data` を選択し、[**プレビュー**] をクリックします。
 
-生成AIモデル Gemini Pro を用いた顧客の声データの分析ができました。作成したテーブルを Looker Studio のダッシュボードに追加することも自由に試してみてください。
+生成AIモデル Gemini Pro を用いた顧客の声データの分析ができました。
+<!--
+作成したテーブルを Looker Studio のダッシュボードに追加することも自由に試してみてください。
+-->
+
+## **[シナリオ4] DataCanvas を用いてクイックにデータを可視化する**
+
+<walkthrough-tutorial-duration duration=15></walkthrough-tutorial-duration>
+
+分析結果を分かりやすく伝えるために、DataCanvasを使ってデータを可視化します。店舗別の顧客満足度を比較する棒グラフ、顧客属性と満足度の関係を示す散布図、自由記述回答のワードクラウドなどを簡単に作成できます。これらの視覚的な表現は、分析結果を直感的に理解するのに役立ち、改善策の検討を促進します。
+
+## Data Canvas を用いたデータの可視化
+ここでは、Data Canvas を用いてクイックにデータを可視化する方法を学びます。
+
+分析結果を分かりやすく伝えるために、DataCanvasを使ってデータを可視化します。店舗別の顧客満足度を比較する棒グラフ、顧客属性と満足度の関係を示す散布図、自由記述回答のワードクラウドなどを簡単に作成できます。これらの視覚的な表現は、分析結果を直感的に理解するのに役立ち、改善策の検討を促進します。
+
+1. +ボタンの横のドロップダウンから Data Canvas を開く
+リージョンを聞かれたら `asia-northeast1`を選択
+
+2. `handson`と入力してデータを検索する 
+
+3. `store_data` と `sales_data` を選んで [**結合**] をクリック
+
+4. プロンプトとして以下を入力して実行
+```
+aaaa
+```
+
+5. [**これらの結果に対してクエリを実行**] をクリックし、以下を入力して実行
+
+6. [**可視化**] をクリック
+
+7. 三点リーダーをクリックして [**Looker Studio にエクスポート**] をクリック
+
+Data Canvas を用いてデータをクイックに可視化する方法を学びました。
+
+## **[シナリオ5] Looker Studio を用いてダッシュボードを作成する
+**
+
+<walkthrough-tutorial-duration duration=15></walkthrough-tutorial-duration>
+
+最後に、店舗マネージャーや経営陣がいつでもどこでも最新の分析結果を確認できるように、Looker Studio を使ってダッシュボードを共有します。ダッシュボードには、店舗別のKPI、顧客満足度の推移などが表示され、データに基づいた意思決定を支援します。
+
+
+## Looker Studio に BigQuery のデータを追加
+<walkthrough-tutorial-duration duration=15></walkthrough-tutorial-duration>
+
+まず、Looker Studio に可視化したい BigQuery のデータを追加します。
+
+1. [Looker Studio](https://lookerstudio.google.com/) にアクセスします。
+
+2. ナビゲーションペインの [**作成**] をクリックし、続いて [**レポート**] をクリックします。
+
+2. アカウントの設定画面が表示された場合は、画面に従って入力してください。
+
+3. [**データに接続**] セクションで [**BigQuery**] をクリックします。
+アクセス権を求められた場合は承認してください。
+4. マイプロジェクトからデータソースを次のとおり選択します。
+
+フィールド | 値
+---------------- | ----------------
+プロジェクト | プロジェクトID
+データセット | `bq_handson`
+表 | `top10_items`
+
+5. [**追加**] をクリックします。続いて [**レポートに追加**] をクリックします。
+
+## Looker Studioにグラフを追加
+
+続いて、追加したデータを元に Looker Studio にグラフを追加します。
+
+1. メニューバーの[**グラフを追加**] > [**棒**] > [**縦棒グラフ**] をクリックします。
+2. 追加されたグラフを選択した状態で、[**グラフ**] ペインでデータの設定をします。
+
+フィールド | 値
+---------------- | ----------------
+ディメンション | `store`
+内部ディメンション | `category`
+指標 | (SUM)`sales_amount`
+
+3. 追加されたグラフをドラッグして任意の位置に移動します。
+
+おめでとうございます！これで Looker Studio のダッシュボードを用いた BigQuery のデータの可視化は完了です。他のテーブルやグラフも自由に追加して試してみてください。
+
 
 ## Congratulations!
 <walkthrough-conclusion-trophy></walkthrough-conclusion-trophy>
