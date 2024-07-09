@@ -157,18 +157,48 @@ BigQUery へ CSV データをインポートすることができました。
 
 まずは、Gemini を使わずに SQL クエリを実行する方法を試します。
 
-店舗ごとの売上を集計するクエリを実行します。
-
 1. <walkthrough-spotlight-pointer cssSelector="[instrumentationid=bq-sql-code-editor] button[name=addTabButton]" single="true">[**SQL クエリを作成**] アイコン</walkthrough-spotlight-pointer> をクリックして、新しいタブを開きます。
 
 2. 下記の SQL を入力し、[**実行**] をクリックして実行結果を確認します。
 ```SQL
-SELECT 
+SELECT
   store,
-  SUM(price) as sales_total
-FROM `next_drag.sales_data`
-GROUP BY store
+  lat_long,
+  COUNT(order_id) AS customer_total
+FROM
+  `next_drag.order` oi
+JOIN
+  `next_drag.store` s
+ON
+  oi.store_id = s.store_id
+WHERE
+  DATE(order_timestamp) = '2024-07-31'
+GROUP BY
+  1,2
 ```
+
+2024 年 7 月 31 日の店舗ごとの来客数が表示されました。
+
+3. 同じタブで下記の SQL を実行し、実行結果を新しいテーブル `daily_customer` に保存します。
+```SQL
+CREATE OR REPLACE TABLE `next_drag.daily_customer` AS
+SELECT
+  store,
+  lat_long,
+  COUNT(order_id) AS customer_total
+FROM
+  `next_drag.order` oi
+JOIN
+  `next_drag.store` s
+ON
+  oi.store_id = s.store_id
+WHERE
+  DATE(order_timestamp) = '2024-07-31'
+GROUP BY
+  1,2
+```
+
+エクスプローラーペインの **プロジェクト ID** > `next_drag` の下に新しいテーブル `daily_customer` が作成されていることが確認できます。
 
 ## Gemini で SQL クエリを生成
 
@@ -216,7 +246,10 @@ LIMIT 10;
 
 3. 実行したクエリを保存して、チームへの共有や次回に再利用することができます。 [**保存**] をクリックし、続いて [**クエリを保存**] をクリックします。
 
-4. [**名前**] に `販売トップ10` と入力し、[**保存**] をクリックします。
+4. [**名前**] に `販売トップ10` と入力し、[**リージョン**] に `asia-northeast1` を選択します。
+
+
+5. [**保存**] をクリックします。
 
 5. 保存されたクエリはエクスプローラペインの **プロジェクト ID** > [**クエリ**] の下で確認ができます。
 
@@ -232,7 +265,7 @@ SELECT
     oi.category,
     SUM(oi.total_price) AS total_sales
   FROM
-    `bq-handson-427902.next_drag.order_items` AS oi
+    `next_drag.order_items` AS oi
   GROUP BY 1, 2
 ORDER BY
   total_sales DESC
@@ -271,8 +304,7 @@ Gemini in BigQuery のアシスタント機能を学びました。これ以外�
 <walkthrough-tutorial-duration duration=15></walkthrough-tutorial-duration>
 まず、BigQuery から Vertex AI への接続を作成します。
 
-1. ナビゲーションメニュー <walkthrough-nav-menu-icon></walkthrough-nav-menu-icon> から [**BigQuery**] に移動します。
-1. 接続を作成するには、エクスプローラペインの [**+データを追加**] をクリックし、続いて [**外部データソースへの接続**] をクリックします。
+1. 接続を作成するには、エクスプローラペインの [**+追加**] をクリックし、続いて [**外部データソースへの接続**] をクリックします。
 2. **外部データソース** ペインで、次の情報を入力します。
 
 フィールド | 値
@@ -374,9 +406,8 @@ FROM
 ## Data Canvas を用いたデータの探索
 ここでは、Data Canvas を用いてクイックにデータを可視化する方法を学びます。
 
-1. 
-<walkthrough-spotlight-pointer cssSelector="[instrumentationid=bq-sql-code-editor] button[aria-label='その他の設定項目']" single="true">▼ボタン</walkthrough-spotlight-pointer>
-をクリックしてドロップダウンメニューを開き [**データキャンバス**] を選択
+1. <walkthrough-spotlight-pointer cssSelector="[instrumentationid=bq-sql-code-editor] button[aria-label='その他の設定項目']" single="true">▼ボタン</walkthrough-spotlight-pointer>
+をクリックしてドロップダウンメニューを開き [**データキャンバス**] を選択します。
 
 リージョンを聞かれたら `asia-northeast1`を選択
 
