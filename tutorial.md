@@ -79,7 +79,7 @@ gcloud storage cp store.csv order.csv order_items.csv customer_voice.csv gs://${
 ハンズオンに必要な CSV データを GCS バケットにアップロードすることができました。
 
 ## BigQuery の Dataset 準備
-ここからはより直感的に理解しやすいよう Cloud Console 上で操作を行います。
+ここからはより直感的に理解しやすいよう Cloud Console 上で操作を行いますので、Cloud Shellは閉じて構いません。
 
 まずは BigQuery の Dataset を作成します。
 
@@ -228,7 +228,7 @@ SELECT
     oi.category,
     SUM(oi.total_price) AS total_sales
   FROM
-    `bq-handson-427902.next_drug.order_items` AS oi
+    `next_drug.order_items` AS oi
   GROUP BY 1, 2
 ORDER BY
   total_sales DESC
@@ -339,9 +339,9 @@ BigQuery のデータに対するクエリの定期実行の方法を学びま�
 ```sql
 CREATE OR REPLACE MODEL next_drug.gemini_model
   REMOTE WITH CONNECTION `us-central1.gemini-connect`
-  OPTIONS(ENDPOINT = 'gemini-pro')
+  OPTIONS(ENDPOINT = 'gemini-1.5-flash')
 ```
-ここでは、生成 AI モデルの Gemini Pro を指定しました。
+ここでは、生成 AI モデルの Gemini Flash を指定しました。
 
 2. 同じタブで以下の SQL を実行し、Gemini からのレスポンスを確認します。
 ```sql
@@ -354,7 +354,8 @@ FROM ML.GENERATE_TEXT(
 ```
 
 Gemini からのレスポンスが json 型であることが分かります。
-BigQuery では json 型のデータを次のようなクエリで展開することが可能です。
+
+3. BigQuery では json 型のデータを次のようなクエリで展開することが可能です。
 ```sql
 SELECT JSON_VALUE(ml_generate_text_result.candidates[0].content.parts[0].text) as response
 FROM ML.GENERATE_TEXT(
@@ -468,13 +469,13 @@ SELECT
   SUM(t3.quantity) AS quantity,
   SUM(t3.total_price) AS total_price
 FROM
-  `bq-handson-427902.next_drug.store` AS t1
+  `next_drug.store` AS t1
 INNER JOIN
-  `bq-handson-427902.next_drug.order` AS t2
+  `next_drug.order` AS t2
 ON
   t1.store_id = t2.store_id
 INNER JOIN
-  `bq-handson-427902.next_drug.order_items` AS t3
+  `next_drug.order_items` AS t3
 ON
   t2.order_id = t3.order_id
 GROUP BY
