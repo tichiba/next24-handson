@@ -239,18 +239,18 @@ LIMIT 10;
 
 5. 生成された SQL クエリを受け入れるには、[**挿入**] をクリックして、クエリエディタにステートメントを挿入します。[**実行**] をクリックして、提案された SQL クエリを実行します。
 
-3. 実行したクエリを保存して、チームへの共有や次回に再利用することができます。 [**保存**] をクリックし、続いて [**クエリを保存**] をクリックします。
+6. 実行したクエリを保存して、チームへの共有や次回に再利用することができます。 [**保存**] をクリックし、続いて [**クエリを保存**] をクリックします。
 
-4. [**名前**] に `販売トップ10` と入力し、[**リージョン**] に `us-central1` を選択し、[**保存**] をクリックします。
+7. [**名前**] に `販売トップ10` と入力し、[**リージョン**] に `us-central1` を選択し、[**保存**] をクリックします。
 
-5. 保存されたクエリはエクスプローラペインの **プロジェクト ID** > [**クエリ**] の下で確認ができます。
+8. 保存されたクエリはエクスプローラペインの **プロジェクト ID** > [**クエリ**] の下で確認ができます。
 
 Gemini で SQL クエリを生成する方法を学びました。
 
 ### **チャレンジ問題**
 <walkthrough-spotlight-pointer cssSelector="[instrumentationid=bq-sql-code-editor] button[name=addTabButton]" single="true">[**SQL クエリを作成**] アイコン</walkthrough-spotlight-pointer> をクリックして新しいタブを開き、自由に SQL クエリの生成を試してみましょう。
 
-* 最も売れている商品カテゴリは？
+* 最も販売数が多い商品カテゴリは？
 * 各店舗で最も来店が多い時間帯は？
 
 
@@ -312,9 +312,9 @@ BigQuery のデータに対するクエリの定期実行の方法を学びま�
 ロケーションタイプ | **リージョン**
 リージョン | `us-central1`
 
-4. [**接続を作成**] をクリックします。
-5. [**接続へ移動**] をクリックします。
-6. [**接続情報**] ペインで、次の手順で使用する **サービス アカウント ID** をコピーします。
+3. [**接続を作成**] をクリックします。
+4. [**接続へ移動**] をクリックします。
+5. [**接続情報**] ペインで、次の手順で使用する **サービス アカウント ID** をコピーします。
 
 ## Vertex AIへの接続で用いるサービスアカウントにアクセス権限を付与
 
@@ -335,7 +335,7 @@ BigQuery のデータに対するクエリの定期実行の方法を学びま�
 
 1. ナビゲーションメニュー <walkthrough-nav-menu-icon></walkthrough-nav-menu-icon> から [**BigQuery**] に移動します。
 
-1. <walkthrough-spotlight-pointer cssSelector="[instrumentationid=bq-sql-code-editor] button[name=addTabButton]" single="true">[**SQL クエリを作成**] アイコン</walkthrough-spotlight-pointer> をクリックして新しいタブを開き、以下の SQL を実行します。
+2. <walkthrough-spotlight-pointer cssSelector="[instrumentationid=bq-sql-code-editor] button[name=addTabButton]" single="true">[**SQL クエリを作成**] アイコン</walkthrough-spotlight-pointer> をクリックして新しいタブを開き、以下の SQL を実行します。
 ```sql
 CREATE OR REPLACE MODEL next_drug.gemini_model
   REMOTE WITH CONNECTION `us-central1.gemini-connect`
@@ -343,7 +343,7 @@ CREATE OR REPLACE MODEL next_drug.gemini_model
 ```
 ここでは、生成 AI モデルの Gemini Flash を指定しました。
 
-2. 同じタブで以下の SQL を実行し、Gemini からのレスポンスを確認します。
+3. 同じタブで以下の SQL を実行し、Gemini からのレスポンスを確認します。
 ```sql
 SELECT ml_generate_text_result as response
 FROM ML.GENERATE_TEXT(
@@ -355,7 +355,7 @@ FROM ML.GENERATE_TEXT(
 
 Gemini からのレスポンスが json 型であることが分かります。
 
-3. BigQuery では json 型のデータを次のようなクエリで展開することが可能です。
+4. BigQuery では json 型のデータを次のようなクエリで展開することが可能です。
 ```sql
 SELECT JSON_VALUE(ml_generate_text_result.candidates[0].content.parts[0].text) as response
 FROM ML.GENERATE_TEXT(
@@ -487,6 +487,7 @@ GROUP BY
 <walkthrough-info-message>**注:** Gemini は、同じプロンプトに対して異なる SQL クエリを提案する場合があります。必要に応じてクエリを修正してください。</walkthrough-info-message>
 
 5. [**実行**] をクリックし、[**クエリ結果**] が表示されることを確認します。
+クエリ結果は 372 件になるはずです (3 店舗 x 4 カテゴリ x 31 日間)。
 
 ## Data Canvas を用いたデータの可視化
 
@@ -516,9 +517,9 @@ ORDER BY
 
 <walkthrough-info-message>**注:** Gemini は、同じプロンプトに対して異なる SQL クエリを提案する場合があります。必要に応じてクエリを修正してください。</walkthrough-info-message>
 
-5. [**実行**] をクリックし、[**クエリ結果**] が表示されることを確認します。
+2. [**実行**] をクリックし、[**クエリ結果**] が表示されることを確認します。
 
-6. [**可視化**] をクリックし、[**折れ線グラフの作成**] を選択します。
+3. [**可視化**] をクリックし、[**折れ線グラフの作成**] を選択します。
 
 横浜店の売上推移を示す折れ線グラフが作成できました。
 
@@ -527,9 +528,6 @@ ORDER BY
 
 * 横浜店のカテゴリごとの売上金額を示す円グラフを作成
 * `store` テーブルと `order` テーブルから曜日ごとの各店舗の来店者数のヒートマップを作成
-<!--
-* `customer_voice_analyzed` テーブルから顧客の声のトピック内訳の円グラフを作成
--->
 
 ## **[シナリオ5] Looker Studio を用いてダッシュボードを作成する**
 
@@ -542,17 +540,6 @@ Data Canvasには、横浜店の売上金額の推移を表す折れ線グラフ
 1. グラフ右上の三点リーダーをクリックして [**Looker Studio にエクスポート**] をクリックします。
 
 Looker Studio が開いて新しいダッシュボードが作成されます。
-
-<!--
-TODO: ここに売上金額の棒グラフも追加できる？
-
-2. 画面左上の [**無題のレポート**] をクリックし、`横浜店レポート` と名前を変更します。
-
-3. 画面右上の [**保存して共有**] をクリックし、ダイアログが開いたら [**同意して保存する**] を選択します。
-
-このダッシュボードを必要な相手に共有することができるようになりました。
-
--->
 
 ## Looker Studio に BigQuery のデータを追加
 
@@ -571,7 +558,7 @@ TODO: ここに売上金額の棒グラフも追加できる？
 データセット | `next_drug`
 表 | `customer_voice_analyzed`
 
-5. [**追加**] をクリックします。続いて [**レポートに追加**] をクリックします。
+4. [**追加**] をクリックします。続いて [**レポートに追加**] をクリックします。
 
 ## Looker Studioにグラフを追加
 
