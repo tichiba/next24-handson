@@ -333,6 +333,8 @@ BigQuery のデータに対するクエリの定期実行の方法を学びま�
 ## BigQuery から生成 AI モデル Gemini へ接続
 続いて、作成した接続を用いて BigQuery から生成 AI モデル Gemini へ接続します。
 
+<walkthrough-info-message>**注:** 前ステップで付与したアクセス権限が反映されるまでに時間がかかり、SQL クエリの実行時に Permission エラーが発生する場合があります。数分待ってから再度 SQL クエリを実行してください。</walkthrough-info-message>
+
 1. ナビゲーションメニュー <walkthrough-nav-menu-icon></walkthrough-nav-menu-icon> から [**BigQuery**] に移動します。
 
 2. <walkthrough-spotlight-pointer cssSelector="[instrumentationid=bq-sql-code-editor] button[name=addTabButton]" single="true">[**SQL クエリを作成**] アイコン</walkthrough-spotlight-pointer> をクリックして新しいタブを開き、以下の SQL を実行します。
@@ -377,7 +379,7 @@ FROM ML.GENERATE_TEXT(
 CREATE OR REPLACE TABLE
   next_drug.customer_voice_analyzed AS
 SELECT
-  timestamp,
+  timestamp,      
   customer_voice,
   store,
   JSON_VALUE(ml_generate_text_result.candidates[0].content.parts[0].text) AS sentiment
@@ -385,7 +387,11 @@ FROM
   ML.GENERATE_TEXT( MODEL next_drug.gemini_model,
     (
     SELECT
-      CONCAT( '次の[顧客の声]の感情分析を行い、[出力形式]に従って出力してください。¥n¥n', '[出力形式]¥nNegative, Neutral, Positive のいずれか1つをプレーンテキストで出力。余計な情報は付加しないこと。¥n¥n', '[顧客の声]¥n', customer_voice ) AS prompt,
+      CONCAT( 
+        '次の[顧客の声]の感情分析を行い、[出力形式]に従って出力してください。¥n¥n', 
+        '[出力形式]¥nNegative, Neutral, Positive のいずれか1つをプレーンテキストで出力。余計な情報は付加しないこと。¥n¥n', 
+        '[顧客の声]¥n', 
+        customer_voice ) AS prompt,
       timestamp,
       customer_voice,
       store
@@ -417,7 +423,11 @@ FROM
   ML.GENERATE_TEXT( MODEL next_drug.gemini_model,
     (
     SELECT
-      CONCAT( '次の[顧客の声]を分類して、[出力形式]に従って出力してください。¥n¥n', '[出力形式]¥n商品・品揃え、価格、スタッフ、店舗環境、その他、のいずれか1つをプレーンテキストで出力。余計な情報は付加しないこと。¥n¥n', '[顧客の声]¥n', customer_voice ) AS prompt,
+      CONCAT( 
+        '次の[顧客の声]を分類して、[出力形式]に従って出力してください。¥n¥n', 
+        '[出力形式]¥n商品・品揃え、価格、スタッフ、店舗環境、その他、のいずれか1つをプレーンテキストで出力。余計な情報は付加しないこと。¥n¥n', 
+        '[顧客の声]¥n', 
+        customer_voice ) AS prompt,
       timestamp,
       customer_voice,
       store,
