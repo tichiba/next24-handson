@@ -452,31 +452,61 @@ FROM
 
 1. <walkthrough-spotlight-pointer cssSelector="[instrumentationid=bq-sql-code-editor] button[aria-label='その他の設定項目']" single="true">▼ボタン</walkthrough-spotlight-pointer>
 をクリックしてドロップダウンメニューを開き [**データキャンバス**] を選択します。
-<!--
-リージョンを聞かれたら `us-central1`を選択
--->
-2. テキストボックスに`next_drug`と入力して [**検索**] をクリックします。 
 
-3. `store` と `order` と `order_items` のテーブルを選択し、[**結合**] をクリックします。
+2. テキストボックスに`customer voice`と入力して [**検索**] をクリックします。 
 
-選択した3つのテーブルと、それを結合したセルがキャンバスに追加されました。
+3. `customer_voice_analyzed` のテーブルを選択し、[**Add to Canvas**] をクリックします。
 
-4. 結合したセルのテキストボックスに、以下のプロンプトを入力して SQL クエリを生成します。
+4. 追加された `customer_voice_analyzed` のセルにマウスカーソルを合わせ、[**クエリ**] をクリックします。
+
+5. 追加された SQL のセルのテキストボックスに、以下のプロンプトを入力して SQL クエリを生成します。
 ```
-各店舗の販売数量と売上金額を、店舗ごと日ごとカテゴリごとに集計
+store, sentiment ごとの件数を集計
 ```
 
 Gemini は、次のような SQL クエリを生成します。
 ```terminal
-# prompt: 各店舗の販売数量と売上金額を、店舗ごと日ごとカテゴリごとに集計
+# prompt: store, sentiment ごとの件数を集計
 
 SELECT
-  t1.store,
+  store,
+  sentiment,
+  COUNT(*) AS COUNT
+FROM
+  `next_drug.customer_voice_analyzed`
+GROUP BY
+  1,
+  2;
+```
+
+<walkthrough-info-message>**注:** Gemini は、同じプロンプトに対して異なる SQL クエリを提案する場合があります。必要に応じてクエリを修正してください。</walkthrough-info-message>
+
+6. [**実行**] をクリックし、[**クエリ結果**] が表示されることを確認します。
+
+7. セルにマウスカーソルを合わせ、[**可視化**] をクリックし、[**棒グラフの作成**] を選択します。
+
+店舗ごとの顧客の声の内訳を示す棒グラフが作成できました。
+
+
+## Data Canvas におけるテーブルの結合
+
+次に、複数のテーブルを結合してデータを探索する方法を学びます。
+
+1. Data Canvas 右下の ** + ボタン (ノードを追加)** をクリックし、[**新しい検索**] を選択します。
+2. テキストボックスに`store, order`と入力して [**検索**] をクリックします。
+3. `store` と `order` と `order_items` のテーブルを選択し、[**結合**] をクリックします。
+4. 追加された SQL 1 セルのテキストボックスに、以下のプロンプトを入力して SQL クエリを生成します。
+```
+これらのデータソースを結合し、横浜店の売上金額を日ごとカテゴリごとに集計
+```
+
+Gemini は、次のような SQL クエリを生成します。
+```terminal
+# prompt: これらのデータソースを結合し、横浜店の売上金額を日ごとカテゴリごとに集計
+
+SELECT
+  EXTRACT(DATE FROM t2.order_timestamp) AS `order_date`,
   t3.category,
-  EXTRACT(DATE
-  FROM
-    t2.order_timestamp) AS `order_date`,
-  SUM(t3.quantity) AS quantity,
   SUM(t3.total_price) AS total_price
 FROM
   `next_drug.store` AS t1
@@ -488,37 +518,34 @@ INNER JOIN
   `next_drug.order_items` AS t3
 ON
   t2.order_id = t3.order_id
+WHERE
+  t1.store = '横浜店'
 GROUP BY
   1,
-  2,
-  3;
+  2;
 ```
 
 <walkthrough-info-message>**注:** Gemini は、同じプロンプトに対して異なる SQL クエリを提案する場合があります。必要に応じてクエリを修正してください。</walkthrough-info-message>
 
 5. [**実行**] をクリックし、[**クエリ結果**] が表示されることを確認します。
-クエリ結果は 372 件になるはずです (3 店舗 x 4 カテゴリ x 31 日間)。
+クエリ結果は 124 件になるはずです (4 カテゴリ x 31 日間)。
 
-## Data Canvas を用いたデータの可視化
-
-Data Canvas には店舗・日・カテゴリごとの売上データテーブルが表示されています。
+## Data Canvas におけるテーブルの結合 (続き)
 
 1. [**これらの結果に対してクエリを実行**] をクリックし、以下をプロンプトとして入力して実行します。
 ```
-横浜店の売上金額を日単位で合計して、時系列順に並び替える
+売上金額を日単位で合計して、時系列順に並び替える
 ```
 
 Gemini は、次のような SQL クエリを生成します。
 ```terminal
-# prompt: 横浜店の売上金額を日単位で合計して、時系列順に並び替える
+# prompt: 売上金額を日単位で合計して、時系列順に並び替える
 
 SELECT
   t1.order_date,
   SUM(t1.total_price) AS sum
 FROM
-  `xxxxxxxxxxx._f9d...52ef` AS t1
-WHERE
-  t1.store = '横浜店'
+  `SQL 1` AS t1
 GROUP BY
   1
 ORDER BY
@@ -545,9 +572,9 @@ ORDER BY
 
 最後に、店舗マネージャーや経営陣がいつでもどこでも最新の分析結果を確認できるように、Looker Studio を使ってダッシュボードを共有します。ダッシュボードには、店舗別のKPI、顧客満足度の推移などが表示され、データに基づいた意思決定を支援します。
 
-Data Canvasには、横浜店の売上金額の推移を表す折れ線グラフが表示されています。
+1. Data Canvasに表示されている、横浜店の売上金額の推移を表す折れ線グラフにマウスカーソルを合わせます。
 
-1. グラフ右上の三点リーダーをクリックして [**Looker Studio にエクスポート**] をクリックします。
+2. グラフ右上の三点リーダーをクリックして [**Looker Studio にエクスポート**] をクリックします。
 
 Looker Studio が開いて新しいダッシュボードが作成されます。
 
